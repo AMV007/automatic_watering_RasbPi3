@@ -106,6 +106,7 @@ class watering_info:
 
 #only possible during watering
 def check_water_level():
+    global water_low_level
     GPIO.setup(config.GPIO_OUT_LEVEL,GPIO.OUT)
     GPIO.setup(config.GPIO_IN_LEVEL,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
     GPIO.output(config.GPIO_OUT_LEVEL,GPIO.HIGH)
@@ -118,18 +119,25 @@ def check_water_level():
     GPIO.setup(config.GPIO_OUT_LEVEL,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
     return not water_low_level
 
-def do_watering():
+def do_watering(watering_seconds=config.DEF_TIME_WATER_S):
 #    print "watering start " + get_time()
+    global time_wait
+    global last_updated
+    
     GPIO.output(config.GPIO_RUN_PUMP,GPIO.LOW)
     time_wait=config.DEF_TIME_WAIT_DAYS
-    for i in range (0,config.DEF_TIME_WATER_S):
+    for i in range (0,watering_seconds):
         sleep(1)
         if i>3 and not check_water_level():
-            time_wait=1
-            break
+            sleep(1)
+            if not check_water_level():
+                time_wait=1
+                break
 
     GPIO.output(config.GPIO_RUN_PUMP,GPIO.HIGH)
     logging.debug("watering done at: " + get_time())   
+    last_updated.update()
+    last_updated.write()
     return time_wait
 
 #   INIT
@@ -163,15 +171,13 @@ logging.debug( "readed last_updated time "+get_time(last_updated.time)+", count=
 def GetWaterLevel():
     return water_low_level
 
-init_bot(GetWaterLevel)
+init_bot(GetWaterLevel,do_watering)
 
 #   MAIN
 if __name__ == "__main__":
     time_wait=config.DEF_TIME_WAIT_DAYS
     while True:        
-        if (datetime.now() - last_updated.time) > timedelta(time_wait) or args.now: 
-            last_updated.update()
-            last_updated.write()
+        if (datetime.now() - last_updated.time) > timedelta(time_wait) or args.now:             
             time_wait=do_watering()
         else:
             sleep(300)

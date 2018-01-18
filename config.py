@@ -4,7 +4,7 @@
 GPIO_RUN_PUMP=18          # pin for run water pump
 GPIO_OUT_LEVEL=23           # pin for water level check - out 5V
 GPIO_IN_LEVEL=24               # pin for water level check - in
-DEF_TIME_WATER_S=90     # time for watering process, seconds
+DEF_TIME_WATER_S=90     # time for watering process, seconds, minimum 5s - so water level will be checked
 DEF_TIME_WAIT_DAYS=3    # delay time between waterings, days
 
 #   MESSAGES

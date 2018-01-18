@@ -38,7 +38,7 @@ def check_only_one_instance():
         while True :
             try:                
                 fcntl.lockf(check_only_one_instance.fp, fcntl.LOCK_EX | fcntl.LOCK_NB) 
-                logging.debug("lock acquired sucessfully")
+                logging.debug("instance lock acquired sucessfully")
                 with open(pid_file,"w") as fw:
                     fw.write(str(os.getpid()))
                 return
