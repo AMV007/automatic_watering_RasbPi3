@@ -105,13 +105,13 @@ class watering_info:
         return
 
 #only possible during watering
-def check_water_level():
+def check_water_level(Notify=True):
     global water_low_level
     GPIO.setup(config.GPIO_OUT_LEVEL,GPIO.OUT)
     GPIO.setup(config.GPIO_IN_LEVEL,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
     GPIO.output(config.GPIO_OUT_LEVEL,GPIO.HIGH)
     water_low_level=not GPIO.input(config.GPIO_IN_LEVEL)
-    if water_low_level:
+    if water_low_level and Notify:
         logging.debug("low level of water")
         send_water_warning_mail()
         send_water_warning_telegram()
@@ -128,7 +128,7 @@ def do_watering(watering_seconds=config.DEF_TIME_WATER_S):
     time_wait=config.DEF_TIME_WAIT_DAYS
     for i in range (0,watering_seconds):
         sleep(1)
-        if i>3 and not check_water_level():
+        if i>3 and not check_water_level(False):
             sleep(1)
             if not check_water_level():
                 time_wait=1
@@ -147,7 +147,7 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 GPIO.setup(config.GPIO_RUN_PUMP,GPIO.OUT)
 #logging.debug("swith off gpio")
-GPIO.output(config.GPIO_RUN_PUMP,GPIO.HIGH)
+GPIO.output(config.GPIO_RUN_PUMP,GPIO.HIGH) # stop water pump
 
 # arguments
 parser = argparse.ArgumentParser()
@@ -177,11 +177,16 @@ init_bot(GetWaterLevel,do_watering)
 if __name__ == "__main__":
     time_wait=config.DEF_TIME_WAIT_DAYS
     while True:        
-        if (datetime.now() - last_updated.time) > timedelta(time_wait) or args.now:             
-            time_wait=do_watering()
-        else:
-            sleep(300)
-    #        logging.debug("time not expired, sleeping " + get_time())
-        if args.now:
-            break
+        try:
+            if (datetime.now() - last_updated.time) > timedelta(time_wait) or args.now:             
+                time_wait=do_watering()
+            else:
+                sleep(300)
+        #        logging.debug("time not expired, sleeping " + get_time())
+            if args.now:
+                break
+        except Exception as e:
+            GPIO.output(config.GPIO_RUN_PUMP,GPIO.HIGH) # disable pump
+            logging.exception("main exception:")      
+            pass
     logging.debug( "Script ended " + get_time())

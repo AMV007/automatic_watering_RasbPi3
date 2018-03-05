@@ -35,3 +35,4 @@ def init_logging_my(_level=logging.DEBUG):
 
     logging.getLogger("urllib3").setLevel(logging.ERROR)
     logging.getLogger("requests").setLevel(logging.ERROR)
+    logging.getLogger("TeleBot").setLevel(logging.CRITICAL)
